@@ -20,6 +20,17 @@
             --dark-color: #111827; /* Dark Gray */
         }
 
+        /* Dark Mode Variables */
+        [data-theme="dark"] {
+            --primary-color: #3b82f6; /* Lighter Blue */
+            --secondary-color: #9ca3af; /* Lighter Gray */
+            --success-color: #34d399; /* Lighter Green */
+            --warning-color: #fbbf24; /* Lighter Amber */
+            --danger-color: #f87171; /* Lighter Red */
+            --light-color: #1f2937; /* Dark Gray */
+            --dark-color: #f9fafb; /* Light Gray */
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--light-color);
@@ -29,6 +40,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         h1 {
@@ -37,10 +49,11 @@
             font-size: 2.5rem;
             text-align: center;
             font-weight: 700;
+            padding-top: 60px; /* Add padding to prevent overlap */
         }
 
         .container {
-            background: white;
+            background: var(--light-color);
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -58,6 +71,7 @@
             font-size: 1rem;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
             background-color: var(--light-color);
+            color: var(--dark-color);
         }
 
         input[type="file"]:focus, input[type="text"]:focus, select:focus {
@@ -142,6 +156,35 @@
             animation: spin 1s linear infinite;
         }
 
+        /* Theme Toggle Button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            z-index: 1000; /* Ensure it stays on top */
+        }
+
+        .theme-toggle:hover {
+            background-color: #1d4ed8; /* Darker Blue */
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle:active {
+            transform: translateY(0);
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -156,6 +199,7 @@
         @media (max-width: 600px) {
             h1 {
                 font-size: 2rem;
+                padding-top: 50px; /* Adjust padding for smaller screens */
             }
 
             .container {
@@ -165,6 +209,11 @@
     </style>
 </head>
 <body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
     <h1>Coordinates Tracker <i class="fas fa-map-marker-alt"></i></h1>
     <div class="container">
         <div id="warningMessage" class="warning-message"></div>
@@ -196,6 +245,16 @@
     </div>
 
     <script>
+        // Theme Toggle Functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        themeToggle.addEventListener('click', () => {
+            const isDarkMode = body.getAttribute('data-theme') === 'dark';
+            body.setAttribute('data-theme', isDarkMode ? 'light' : 'dark');
+            themeToggle.innerHTML = isDarkMode ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+        });
+
         // Detect if the app is opened in WhatsApp's in-app browser
         const isWhatsApp = /WhatsApp/.test(navigator.userAgent);
 
