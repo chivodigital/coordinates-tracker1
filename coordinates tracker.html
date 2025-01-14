@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinates Tracker by Sherif Nabil</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Modern Color Scheme */
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: var(--dark-color);
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            text-align: center;
+        }
+
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        input[type="file"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="file"]:focus, input[type="text"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .instructions {
+            margin-top: 25px;
+            background: var(--light-color);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .instructions h2 {
+            margin-top: 0;
+            color: var(--dark-color);
+            font-size: 1.5rem;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+
+        .success-message {
+            color: var(--success-color);
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .warning-message {
+            color: var(--danger-color);
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading-spinner i {
+            color: var(--primary-color);
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Coordinates Tracker <i class="fas fa-map-marker-alt"></i></h1>
+    <div class="container">
+        <div id="warningMessage" class="warning-message"></div>
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls" />
+        <input type="text" id="customerDial" placeholder="Enter Customer Dial" />
+        <input type="text" id="cabinetNumber" placeholder="Enter Cabinet Number" />
+        <input type="text" id="popName" placeholder="Enter Pop Name" />
+        <input type="text" id="enterpriseLineId" placeholder="Enter Enterprise Line ID" />
+        <button onclick="addLocation()">
+            <i class="fas fa-plus-circle"></i> Add Location
+        </button>
+        <div id="successMessage" class="success-message"></div>
+        <div class="loading-spinner" id="loadingSpinner">
+            <i class="fas fa-spinner"></i>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h2><i class="fas fa-info-circle"></i> Instructions</h2>
+        <ol>
+            <li><strong>Upload Excel File (Optional):</strong> If you have an existing Excel file, click "Choose File" to upload it. If not, the app will create a new file for you.</li>
+            <li><strong>Enter Customer Dial, Cabinet Number, Pop Name, or Enterprise Line ID:</strong> Fill in one of the input fields based on the type of entry.</li>
+            <li><strong>Add Location:</strong> Click "Add Location" to capture the current coordinates (latitude and longitude) and save them to the Excel file.</li>
+        </ol>
+    </div>
+
+    <script>
+        // Detect if the app is opened in WhatsApp's in-app browser
+        const isWhatsApp = /WhatsApp/.test(navigator.userAgent);
+
+        if (isWhatsApp) {
+            // Show a warning message and a button to open the app in the default browser
+            document.getElementById('warningMessage').innerHTML = `
+                <strong>Important:</strong> This app does not work in WhatsApp's in-app browser. 
+                Please open it in your default browser (e.g., Chrome, Safari) for full functionality.
+                <br><br>
+                <button onclick="openInBrowser()" style="background-color: var(--success-color); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                    <i class="fas fa-external-link-alt"></i> Open in Browser
+                </button>
+            `;
+        }
+
+        function openInBrowser() {
+            // Open the current URL in the default browser
+            const url = window.location.href;
+            window.open(url, '_system');
+        }
+
+        let workbook;
+        let worksheet;
+        let fileData = [["ID", "Date", "Type", "Latitude", "Longitude"]]; // Add headers
+        let generatedFile;
+
+        // Check if a file is uploaded
+        document.getElementById('excelFileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                workbook = XLSX.read(data, {type: 'array'});
+                worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                fileData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        function addLocation() {
+            const customerDial = document.getElementById('customerDial').value;
+            const cabinetNumber = document.getElementById('cabinetNumber').value;
+            const popName = document.getElementById('popName').value;
+            const enterpriseLineId = document.getElementById('enterpriseLineId').value;
+
+            let id, type;
+            if (customerDial) {
+                id = customerDial;
+                type = "Customer Dial";
+            } else if (cabinetNumber) {
+                id = cabinetNumber;
+                type = "Cabinet Number";
+            } else if (popName) {
+                id = popName;
+                type = "Pop Name";
+            } else if (enterpriseLineId) {
+                id = enterpriseLineId;
+                type = "Enterprise Line ID";
+            } else {
+                alert("Please enter Customer Dial, Cabinet Number, Pop Name, or Enterprise Line ID.");
+                return;
+            }
+
+            // Show loading spinner
+            document.getElementById('loadingSpinner').style.display = 'block';
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    // Get current date
+                    const currentDate = new Date();
+                    const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+
+                    // Add new row to the data
+                    fileData.push([id, formattedDate, type, latitude, longitude]);
+
+                    // If no file is uploaded, create a new workbook
+                    if (!workbook) {
+                        workbook = XLSX.utils.book_new();
+                        worksheet = XLSX.utils.aoa_to_sheet(fileData);
+                        XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+                    } else {
+                        // If a file is uploaded, update the existing worksheet
+                        worksheet = XLSX.utils.aoa_to_sheet(fileData);
+                        workbook.Sheets[workbook.SheetNames[0]] = worksheet;
+                    }
+
+                    // Convert workbook to binary Excel file
+                    const newFile = XLSX.write(workbook, {bookType: 'xlsx', type: 'binary'});
+                    generatedFile = new Blob([s2ab(newFile)], {type: "application/octet-stream"});
+
+                    // Generate filename with current date
+                    const filename = `coordinates_tracker_${formattedDate}.xlsx`;
+
+                    // Trigger download
+                    saveAs(generatedFile, filename);
+
+                    // Show success message
+                    document.getElementById('successMessage').textContent = "Location added successfully!";
+
+                    // Hide loading spinner
+                    document.getElementById('loadingSpinner').style.display = 'none';
+
+                    // Clear input fields after successful addition
+                    document.getElementById('customerDial').value = '';
+                    document.getElementById('cabinetNumber').value = '';
+                    document.getElementById('popName').value = '';
+                    document.getElementById('enterpriseLineId').value = '';
+                }, function(error) {
+                    alert("Error getting location: " + error.message);
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+                document.getElementById('loadingSpinner').style.display = 'none';
+            }
+        }
+
+        function s2ab(s) {
+            const buf = new ArrayBuffer(s.length);
+            const view = new Uint8Array(buf);
+            for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+            return buf;
+        }
+    </script>
+</body>
+</html>
