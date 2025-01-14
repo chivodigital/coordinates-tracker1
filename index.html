@@ -7,20 +7,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Modern Color Scheme */
         :root {
-            --primary-color: #007bff;
-            --secondary-color: #6c757d;
-            --success-color: #28a745;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
+            --primary-color: #2563eb; /* Blue */
+            --secondary-color: #6b7280; /* Gray */
+            --success-color: #10b981; /* Green */
+            --warning-color: #f59e0b; /* Amber */
+            --danger-color: #ef4444; /* Red */
+            --light-color: #f9fafb; /* Light Gray */
+            --dark-color: #111827; /* Dark Gray */
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--light-color);
             margin: 0;
             padding: 20px;
@@ -35,31 +36,34 @@
             margin-bottom: 20px;
             font-size: 2.5rem;
             text-align: center;
+            font-weight: 700;
         }
 
         .container {
             background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             max-width: 500px;
             width: 100%;
             animation: fadeIn 0.5s ease-in-out;
         }
 
-        input[type="file"], input[type="text"] {
+        input[type="file"], input[type="text"], select {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
-            border: 1px solid #ddd;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
             font-size: 1rem;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            background-color: var(--light-color);
         }
 
-        input[type="file"]:focus, input[type="text"]:focus {
+        input[type="file"]:focus, input[type="text"]:focus, select:focus {
             border-color: var(--primary-color);
             outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
         button {
@@ -72,11 +76,17 @@
             cursor: pointer;
             width: 100%;
             font-size: 1rem;
-            transition: background-color 0.3s ease;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
         button:hover {
-            background-color: #0056b3;
+            background-color: #1d4ed8; /* Darker Blue */
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
         }
 
         .instructions {
@@ -91,6 +101,7 @@
             margin-top: 0;
             color: var(--dark-color);
             font-size: 1.5rem;
+            font-weight: 600;
         }
 
         .instructions ol {
@@ -100,20 +111,23 @@
         .instructions li {
             margin-bottom: 10px;
             color: var(--secondary-color);
+            line-height: 1.6;
         }
 
         .success-message {
             color: var(--success-color);
             margin-top: 10px;
-            font-weight: bold;
+            font-weight: 600;
             text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
         }
 
         .warning-message {
             color: var(--danger-color);
             margin-top: 10px;
-            font-weight: bold;
+            font-weight: 600;
             text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
         }
 
         .loading-spinner {
@@ -134,8 +148,19 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
+            from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -144,11 +169,15 @@
     <div class="container">
         <div id="warningMessage" class="warning-message"></div>
         <input type="file" id="excelFileInput" accept=".xlsx, .xls" />
-        <input type="text" id="customerDial" placeholder="Enter Customer Dial" />
-        <input type="text" id="cabinetNumber" placeholder="Enter Cabinet Number" />
-        <input type="text" id="popName" placeholder="Enter Pop Name" />
-        <input type="text" id="enterpriseLineId" placeholder="Enter Enterprise Line ID" />
-        <button onclick="addLocation()">
+        <select id="idType">
+            <option value="" disabled selected>Choose Type</option>
+            <option value="Customer Dial">Customer Dial</option>
+            <option value="Cabinet Number">Cabinet Number</option>
+            <option value="Pop Name">Pop Name</option>
+            <option value="Enterprise Line ID">Enterprise Line ID</option>
+        </select>
+        <input type="text" id="idValue" placeholder="Enter Value" />
+        <button onclick="confirmAddLocation()">
             <i class="fas fa-plus-circle"></i> Add Location
         </button>
         <div id="successMessage" class="success-message"></div>
@@ -161,7 +190,7 @@
         <h2><i class="fas fa-info-circle"></i> Instructions</h2>
         <ol>
             <li><strong>Upload Excel File (Optional):</strong> If you have an existing Excel file, click "Choose File" to upload it. If not, the app will create a new file for you.</li>
-            <li><strong>Enter Customer Dial, Cabinet Number, Pop Name, or Enterprise Line ID:</strong> Fill in one of the input fields based on the type of entry.</li>
+            <li><strong>Select ID Type and Enter Value:</strong> Choose the type of ID from the dropdown menu and enter the corresponding value in the input field.</li>
             <li><strong>Add Location:</strong> Click "Add Location" to capture the current coordinates (latitude and longitude) and save them to the Excel file.</li>
         </ol>
     </div>
@@ -208,29 +237,35 @@
             reader.readAsArrayBuffer(file);
         });
 
-        function addLocation() {
-            const customerDial = document.getElementById('customerDial').value;
-            const cabinetNumber = document.getElementById('cabinetNumber').value;
-            const popName = document.getElementById('popName').value;
-            const enterpriseLineId = document.getElementById('enterpriseLineId').value;
+        // Auto-focus on input field after selecting a type
+        document.getElementById('idType').addEventListener('change', function() {
+            document.getElementById('idValue').focus();
+        });
 
-            let id, type;
-            if (customerDial) {
-                id = customerDial;
-                type = "Customer Dial";
-            } else if (cabinetNumber) {
-                id = cabinetNumber;
-                type = "Cabinet Number";
-            } else if (popName) {
-                id = popName;
-                type = "Pop Name";
-            } else if (enterpriseLineId) {
-                id = enterpriseLineId;
-                type = "Enterprise Line ID";
-            } else {
-                alert("Please enter Customer Dial, Cabinet Number, Pop Name, or Enterprise Line ID.");
+        // Confirmation dialog before adding location
+        function confirmAddLocation() {
+            const idType = document.getElementById('idType').value;
+            const idValue = document.getElementById('idValue').value;
+
+            if (!idType || idType === "Choose Type") {
+                alert("Please select a type from the dropdown menu.");
                 return;
             }
+
+            if (!idValue) {
+                alert("Please enter a value.");
+                return;
+            }
+
+            const confirmAdd = confirm(`Are you sure you want to add this location?\nType: ${idType}\nValue: ${idValue}`);
+            if (confirmAdd) {
+                addLocation();
+            }
+        }
+
+        function addLocation() {
+            const idType = document.getElementById('idType').value;
+            const idValue = document.getElementById('idValue').value;
 
             // Show loading spinner
             document.getElementById('loadingSpinner').style.display = 'block';
@@ -245,7 +280,7 @@
                     const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
 
                     // Add new row to the data
-                    fileData.push([id, formattedDate, type, latitude, longitude]);
+                    fileData.push([idValue, formattedDate, idType, latitude, longitude]);
 
                     // If no file is uploaded, create a new workbook
                     if (!workbook) {
@@ -274,11 +309,9 @@
                     // Hide loading spinner
                     document.getElementById('loadingSpinner').style.display = 'none';
 
-                    // Clear input fields after successful addition
-                    document.getElementById('customerDial').value = '';
-                    document.getElementById('cabinetNumber').value = '';
-                    document.getElementById('popName').value = '';
-                    document.getElementById('enterpriseLineId').value = '';
+                    // Clear input field after successful addition
+                    document.getElementById('idValue').value = '';
+                    document.getElementById('idType').selectedIndex = 0; // Reset dropdown to "Choose Type"
                 }, function(error) {
                     alert("Error getting location: " + error.message);
                     document.getElementById('loadingSpinner').style.display = 'none';
