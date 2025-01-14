@@ -57,7 +57,6 @@ The generated Excel file includes:
 - Works best in Chrome browser
 - Keep GPS enabled for accurate readings
 - Allow location access when prompted
-- Not recommended for use in WhatsApp's in-app browser
 
 ## 👨‍💻 Author
 
