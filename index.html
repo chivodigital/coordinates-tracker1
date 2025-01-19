@@ -357,7 +357,7 @@
                     generatedFile = new Blob([s2ab(newFile)], {type: "application/octet-stream"});
 
                     // Generate filename with current date
-                    const filename = `coordinates_tracker_${formattedDate}.xlsx`;
+                    const filename = `CT_${formattedDate}.xlsx`;
 
                     // Trigger download
                     saveAs(generatedFile, filename);
